@@ -1,3 +1,5 @@
+> **Attributed text review snapshot:** This temporary branch defaults to Fuse mode and pins the reviewed SkipFuseUI and SkipUI commits. See [REVIEW.md](REVIEW.md) for setup and what to check.
+
 # Skip Showcase
 
 A comprehensive demonstration app for [Skip](https://skip.dev), showcasing cross-platform SwiftUI development for iOS and Android. This is a combination [Skip Lite](https://skip.dev/docs/modes/) and [Skip Fuse](https://skip.dev/docs/modes/) app that can be condfigured to run in either transpiled or native mode.

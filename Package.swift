@@ -1,14 +1,14 @@
 // swift-tools-version: 6.1
 import PackageDescription
 
-// SKIP_MODE toggles between Skip Lite (default) and Skip Fuse for the Showcase app.
+// This review branch defaults to Skip Fuse and pins the attributed-text changes.
+// SKIP_MODE=lite selects the transpiled comparison build.
 // Set SKIP_MODE=fuse to depend on SkipFuseUI + SkipSQLPlus and compile with SKIP_MODE_FUSE defined,
 // which also causes skipstone to build the Showcase module in `native` mode
 // (Sources/Showcase/Skip/skip.yml sets `mode: 'automatic'`, which becomes 'native' when SkipFuse is present).
 //
 // Example usage: SKIP_MODE=fuse skip app launch
-let defaultMode = "lite"
-//let defaultMode = "fuse"
+let defaultMode = "fuse"
 let fuse = (Context.environment["SKIP_MODE"] ?? defaultMode) == "fuse"
 
 let package = Package(
@@ -19,8 +19,8 @@ let package = Package(
         .library(name: "Showcase", type: .dynamic, targets: ["Showcase"]),
     ],
     dependencies: [
-        fuse ? .package(url: "https://github.com/skiptools/skip-fuse-ui.git", from: "1.19.0")
-             : .package(url: "https://github.com/skiptools/skip-ui.git", from: "1.61.0"),
+        fuse ? .package(url: "https://github.com/tifroz/skip-fuse-ui.git", revision: "8c78981dde21d7d90cb9e75ce8af7f8d03ac4682")
+             : .package(url: "https://github.com/tifroz/skip-ui.git", revision: "f3f7c277108d54059adcdbe640499a598e9db978"),
         .package(url: "https://github.com/skiptools/skip.git", from: "1.9.7"),
         .package(url: "https://github.com/skiptools/skip-kit.git", from: "1.1.3"),
         .package(url: "https://github.com/skiptools/skip-av.git", "0.7.2"..<"2.0.0"),
@@ -62,34 +62,9 @@ let package = Package(
     ]
 )
 
-// SKIP_DEPENDENCY_ROOT overrides every skiptools dependency with a local
-// `.package(path: ROOT/<repo>)` checkout.
-// This lets developers iterate against unreleased
-// Skip library changes; in CI/normal builds the variable is unset and remote
-// versions resolve as usual.
-//
-// Example usage: SKIP_MODE=lite SKIP_DEPENDENCY_ROOT=/path/to/local/skip/repostories skip app launch
-if let dependencyRoot = Context.environment["SKIP_DEPENDENCY_ROOT"] {
-    package.dependencies = package.dependencies.map { dep in
-        switch dep.kind {
-        case .sourceControl(_, let location, _):
-            guard let baseName = location.split(separator: "/").last?.split(separator: ".").first else {
-                return dep
-            }
-            guard baseName.hasPrefix("skip") else {
-                return dep
-            }
-            return Package.Dependency.package(path: dependencyRoot + "/" + baseName)
-        default:
-            return dep
-        }
-    }
-    // Root-package dependencies override transitive dependencies with the same identity,
-    // so also pin transitive skip libraries that the app doesn't depend on directly.
-    package.dependencies.append(.package(path: dependencyRoot + "/skip-model"))
-    if fuse {
-        // In Fuse mode skip-ui is only reachable through skip-fuse-ui; in Lite mode it is a
-        // direct dependency already mapped above (appending it again would be a duplicate).
-        package.dependencies.append(.package(path: dependencyRoot + "/skip-ui"))
-    }
+// Pin the transitive SkipUI dependency at the app root, so the SkipFuseUI PR
+// can retain its upstream dependency declaration. Leave SKIP_DEPENDENCY_ROOT
+// unset when resolving or building this review snapshot.
+if fuse {
+    package.dependencies.append(.package(url: "https://github.com/tifroz/skip-ui.git", revision: "f3f7c277108d54059adcdbe640499a598e9db978"))
 }

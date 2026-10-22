@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REVIEW_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+
+# Use the checked-in remote pins, not a developer's local dependency overrides.
+unset SKIP_DEPENDENCY_ROOT
+export SKIP_MODE=fuse
+export SKIP_COMMAND_OVERRIDE="$SCRIPT_DIR/review-skip"
+
+cd "$REVIEW_ROOT"
+exec skip gradle -p "$REVIEW_ROOT/Android" :app:assembleDebug "$@"
